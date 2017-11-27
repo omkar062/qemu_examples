@@ -1,0 +1,58 @@
+installed packages: 
+
+apt-get install qemu-user-static
+sudo apt-get install gdb-multiarch
+
+
+arm-linux-gnueabi-as -o hello.o -g hello.s
+
+arm-linux-gnueabi-ld -o hello hello.o
+
+=================debugging
+
+# In a terminal
+$ qemu-arm-static -g 10101 ./hello
+
+
+
+# In a new terminal
+$gdb-multiarch 
+
+(gdb) list _start
+8	.text
+9	
+10	.globl _start
+11	_start:
+12	/* write syscall */
+13	mov %r0, $1 
+14	ldr %r1, =msg 
+15	ldr %r2, =len 
+16	mov %r7, $4 
+17	swi $0 
+
+(gdb) b 16
+Breakpoint 1 at 0x8080: file hello.s, line 16.
+
+
+(gdb) target remote :10101
+Remote debugging using :10101
+[New Remote target]
+[Switching to Remote target]
+_start () at hello.s:13
+13	mov %r0, $1 
+
+(gdb) c
+Continuing.
+
+Breakpoint 1, _start () at hello.s:16
+16	mov %r7, $4 
+(gdb) n
+17	swi $0 
+(gdb) n
+20	mov %r0, $0 
+(gdb) c 
+Continuing.
+[Inferior 1 (Remote target) exited normally]
+
+[EDIT] You'll want debugging information ie
+$ arm-linux-gnueabi-as -gstabs -o hello.o hello.s 
